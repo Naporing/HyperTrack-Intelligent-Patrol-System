@@ -77,8 +77,10 @@ build/
 # .gitattributes already configures *.onnx to use LFS
 
 # Data files (should not be in repo)
-backend/data/videos/
-backend/data/detections/
+backend/data/videos/*
+backend/data/detections/*
+!backend/data/videos/.gitkeep
+!backend/data/detections/.gitkeep
 
 # Database (keep this one)
 # railway.db  # 注释：数据库文件是否提交取决于项目需求
