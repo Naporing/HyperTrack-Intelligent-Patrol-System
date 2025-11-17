@@ -73,8 +73,8 @@ build/
 *.bak
 *.backup
 
-# Model files (if they are large and need separate storage)
-# backend/models/*.onnx  # 注释：如果模型文件很大，可以考虑用 Git LFS
+# Model files are now handled by Git LFS
+# .gitattributes already configures *.onnx to use LFS
 
 # Data files (should not be in repo)
 backend/data/videos/
