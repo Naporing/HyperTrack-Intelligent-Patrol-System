@@ -1,0 +1,88 @@
+# ========================================
+# 智能高铁巡检系统 - Git 忽略文件
+# ========================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# React / Frontend Build
+dist/
+build/
+.next/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Backup files
+*.bak
+*.backup
+
+# Model files (if they are large and need separate storage)
+# backend/models/*.onnx  # 注释：如果模型文件很大，可以考虑用 Git LFS
+
+# Data files (should not be in repo)
+backend/data/videos/
+backend/data/detections/
+
+# Database (keep this one)
+# railway.db  # 注释：数据库文件是否提交取决于项目需求
+
+# Logs
+logs/
+*.log
