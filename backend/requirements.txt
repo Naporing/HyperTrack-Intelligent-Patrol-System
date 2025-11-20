@@ -9,6 +9,7 @@ uvicorn[standard]==0.32.0
 
 # AI 检测模型
 ultralytics==8.3.0
+onnx==1.16.0
 onnxruntime==1.19.2
 opencv-python-headless==4.10.0.84
 
