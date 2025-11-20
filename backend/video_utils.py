@@ -43,27 +43,3 @@ def get_video_metadata(video_path: str) -> dict:
         cap.release()
 
 
-def get_video_path(task_id: str) -> Path:
-    """
-    Get video file path for given task_id
-
-    Args:
-        task_id: Task identifier
-
-    Returns:
-        Path object pointing to video file
-    """
-    return Path(f"./data/videos/{task_id}/video.mp4")
-
-
-def get_detection_path(task_id: str) -> Path:
-    """
-    Get detection result file path for given task_id
-
-    Args:
-        task_id: Task identifier
-
-    Returns:
-        Path object pointing to detection JSON file
-    """
-    return Path(f"./data/detections/{task_id}.json")

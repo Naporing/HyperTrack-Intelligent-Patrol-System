@@ -28,11 +28,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
-# 导入检测引擎
-from detection import detection_engine
-
-# 导入视频处理工具
-from video_utils import get_video_metadata, get_video_path, get_detection_path
+# 导入视频处理工具（A的职责范围）
+from video_utils import get_video_metadata
 
 
 def generate_task_id() -> str:
@@ -198,21 +195,25 @@ async def upload_video(file: UploadFile = File(...)):
 @app.post("/detect/{task_id}", response_model=SuccessResponse)
 async def run_detection(task_id: str):
     """
-    执行目标检测
+    执行目标检测 - 接口骨架，等待B实现检测逻辑
 
-    严格遵循API文档规范：
-    - 支持幂等性操作，避免重复推理
-    - 使用YOLOv8模型进行电杆检测
-    - 生成标准格式的JSON结果文件
-    - 只检测三类电杆：iron_pole, concrete_pole, iron_gantry_pole
+    A的职责范围：
+    - 检查任务是否存在
+    - 幂等性操作（避免重复推理）
+    - 接口规范和错误处理
+
+    B的职责范围：
+    - YOLOv8模型推理
+    - 检测算法实现
+    - JSON结果生成
     """
     try:
-        # 检查任务是否存在
+        # 检查任务是否存在 - A的职责
         video_path = Path(f"./data/videos/{task_id}/video.mp4")
         if not video_path.exists():
             return ResponseWrapper(False, error="TASK_NOT_FOUND")
 
-        # 检查检测结果是否已存在
+        # 检查检测结果是否已存在 - A的职责（幂等性）
         detection_path = Path(f"./data/detections/{task_id}.json")
         if detection_path.exists():
             return ResponseWrapper(True, data={
@@ -221,22 +222,13 @@ async def run_detection(task_id: str):
                 "task_id": task_id
             })
 
-        # 执行检测 - 调用B的检测引擎
-        output_path = f"./data/detections/{task_id}.json"
-        print(f"[INFO] 开始检测任务 {task_id}，视频路径: {video_path}")
-        print(f"[INFO] 输出路径: {output_path}")
+        # TODO: B需要在这里实现YOLOv8检测逻辑
+        # 等待B实现：
+        # 1. 调用YOLOv8模型进行推理
+        # 2. 生成标准格式的JSON结果文件
+        # 3. 返回检测成功状态
 
-        success = detection_engine.process_video(str(video_path), output_path)
-
-        if not success:
-            print(f"[ERROR] 检测任务 {task_id} 失败")
-            return ResponseWrapper(False, error="DETECT_FAILED")
-
-        print(f"[INFO] 检测任务 {task_id} 成功完成")
-        return ResponseWrapper(True, data={
-            "generated": True,
-            "task_id": task_id
-        })
+        return ResponseWrapper(False, error="DETECT_NOT_IMPLEMENTED")
 
     except Exception as e:
         print(f"[ERROR] /detect/{task_id}: {str(e)}")
@@ -377,17 +369,7 @@ async def startup_event():
 
     print("[INFO] 智能高铁巡检系统 API 启动成功")
 
-    # 测试检测引擎加载
-    try:
-        if detection_engine.load_model():
-            print("[SUCCESS] 检测引擎加载成功")
-        else:
-            print("[ERROR] 检测引擎加载失败")
-    except Exception as e:
-        print(f"[ERROR] 检测引擎加载异常: {e}")
-
 # SYNCED: 与 UploadPage 联调通过 2025-11-18
-# SYNCED: 与 detection.py 联调通过 2025-11-18
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
