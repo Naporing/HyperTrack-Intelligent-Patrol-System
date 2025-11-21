@@ -31,6 +31,9 @@ from pydantic import BaseModel
 # 导入视频处理工具（A的职责范围）
 from video_utils import get_video_metadata
 
+# 导入检测引擎（B的职责范围）
+from detection import detection_engine
+
 
 def generate_task_id() -> str:
     """
@@ -222,17 +225,30 @@ async def run_detection(task_id: str):
                 "task_id": task_id
             })
 
-        # TODO: B需要在这里实现YOLOv8检测逻辑
-        # 等待B实现：
-        # 1. 调用YOLOv8模型进行推理
-        # 2. 生成标准格式的JSON结果文件
-        # 3. 返回检测成功状态
+        # B的YOLOv8检测逻辑实现
+        print(f"[INFO] Starting detection for task: {task_id}")
 
-        return ResponseWrapper(False, error="DETECT_NOT_IMPLEMENTED")
+        # 调用检测引擎处理视频
+        success = detection_engine.process_video(
+            str(video_path),
+            str(detection_path)
+        )
+
+        if success:
+            print(f"[INFO] Detection completed successfully for task: {task_id}")
+            return ResponseWrapper(True, data={
+                "generated": True,
+                "task_id": task_id
+            })
+        else:
+            print(f"[ERROR] Detection failed for task: {task_id}")
+            return ResponseWrapper(False, error="DETECT_FAILED")
 
     except Exception as e:
         print(f"[ERROR] /detect/{task_id}: {str(e)}")
         return ResponseWrapper(False, error="INTERNAL_ERROR")
+
+# SYNCED: 与 DetectionEngine 联调通过 - 开发者B集成完成 2025-11-21
 
 @app.get("/detections/{task_id}", response_model=SuccessResponse)
 async def get_detections(task_id: str):
