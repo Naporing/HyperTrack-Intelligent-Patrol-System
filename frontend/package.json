@@ -4,10 +4,13 @@
   "description": "智能高铁巡检系统前端 - React + Vite",
   "private": true,
   "dependencies": {
+    "autoprefixer": "^10.4.22",
+    "axios": "^1.7.7",
     "react": "^18.3.1",
-    "video.js": "^8.19.1",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.6",
     "tailwindcss": "^3.4.14",
-    "axios": "^1.7.7"
+    "video.js": "^8.19.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.3",
