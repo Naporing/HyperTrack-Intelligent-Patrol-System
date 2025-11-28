@@ -30,8 +30,7 @@ from pydantic import BaseModel
 
 # 导入视频处理工具（A的职责范围）
 from video_utils import get_video_metadata
-
-# 导入检测引擎（B的职责范围）
+# 导入检测引擎（B的职责范围，A负责接口集成）
 from detection import detection_engine
 
 
@@ -225,30 +224,28 @@ async def run_detection(task_id: str):
                 "task_id": task_id
             })
 
-        # B的YOLOv8检测逻辑实现
+        # 调用B的检测引擎进行推理（A的接口集成职责）
         print(f"[INFO] Starting detection for task: {task_id}")
 
-        # 调用检测引擎处理视频
-        success = detection_engine.process_video(
+        # 执行检测
+        detection_success = detection_engine.process_video(
             str(video_path),
             str(detection_path)
         )
 
-        if success:
-            print(f"[INFO] Detection completed successfully for task: {task_id}")
-            return ResponseWrapper(True, data={
-                "generated": True,
-                "task_id": task_id
-            })
-        else:
+        if not detection_success:
             print(f"[ERROR] Detection failed for task: {task_id}")
             return ResponseWrapper(False, error="DETECT_FAILED")
+
+        print(f"[INFO] Detection completed successfully for task: {task_id}")
+        return ResponseWrapper(True, data={
+            "generated": True,
+            "task_id": task_id
+        })
 
     except Exception as e:
         print(f"[ERROR] /detect/{task_id}: {str(e)}")
         return ResponseWrapper(False, error="INTERNAL_ERROR")
-
-# SYNCED: 与 DetectionEngine 联调通过 - 开发者B集成完成 2025-11-21
 
 @app.get("/detections/{task_id}", response_model=SuccessResponse)
 async def get_detections(task_id: str):
