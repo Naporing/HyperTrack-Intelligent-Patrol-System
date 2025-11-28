@@ -137,7 +137,6 @@ class DetectionEngine:
 
             # 存储检测结果
             detection_results = []
-            box_id_counter = 1
             total_detections = 0
             failed_frames = 0
 
@@ -159,10 +158,11 @@ class DetectionEngine:
                     # 执行推理（使用ultralytics默认参数，不传入conf/iou）
                     results = self.model(frame)
 
-                    # 解析检测结果
+                    # 解析检测结果，每帧从1开始编号
                     boxes = []
                     valid_detections = 0
                     invalid_detections = 0
+                    box_id_counter = 1  # 每帧重置box_id_counter为1
 
                     for result in results:
                         if result.boxes is not None:
@@ -184,7 +184,7 @@ class DetectionEngine:
                                         "xyxy": [int(x1), int(y1), int(x2), int(y2)],
                                         "label": self.class_names[cls]
                                     })
-                                    box_id_counter += 1
+                                    box_id_counter += 1  # 帧内自增
                                     valid_detections += 1
 
                     # 添加到结果列表
