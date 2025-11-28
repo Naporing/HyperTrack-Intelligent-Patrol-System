@@ -6,7 +6,11 @@
       "Bash(docs/ui-decisions.md)",
       "Bash(docs/risk-board.md)",
       "Bash(docs/claude-prompts.md:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm run dev)",
+      "Bash(git push:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
