@@ -141,11 +141,19 @@ export const getDetections = async (taskId) => {
 // 错误信息映射
 const getErrorMessage = (errorCode) => {
   const errorMessages = {
+<<<<<<< HEAD
     // 上传相关错误
     'UPLOAD_INVALID_FILE': '文件格式不支持或文件过大',
     'UPLOAD_SAVE_FAILED': '保存失败，请重试',
 
     // 检测相关错误
+=======
+    // 现有上传相关错误
+    'UPLOAD_INVALID_FILE': '文件格式不支持或文件过大',
+    'UPLOAD_SAVE_FAILED': '保存失败，请重试',
+
+    // 新增检测相关错误
+>>>>>>> origin/feature/c/InspectPage
     'TASK_NOT_FOUND': '任务不存在，请重新上传视频',
     'DETECT_FAILED': '检测失败，请重试',
     'DETECTIONS_NOT_FOUND': '检测结果不存在',
