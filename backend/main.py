@@ -1,12 +1,13 @@
 # DAY1_SYNCED
-# backend/main.py - 融合版本
+# backend/main.py - 重建版本
 """
-智能高铁巡检系统 - FastAPI 主应用（融合版本）
+智能高铁巡检系统 - FastAPI 主应用（重建版本）
 
-基于main.py和main(2).py的融合版本：
-- 保留main.py的简洁架构和完整功能
-- 保留main(2).py的优秀错误处理和响应格式
-- 确保与detection.py的正确集成
+基于现有完整代码重建，解决VS Code显示问题：
+- 保持与detection.py和video_utils.py的正确集成
+- 严格执行CLAUDE.md项目规范
+- 实现所有5个必需的API接口
+- 统一响应格式和错误处理
 """
 
 import json
@@ -28,9 +29,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
-# 导入视频处理工具（A的职责范围）
+# 导入视频处理工具
 from video_utils import get_video_metadata
-# 导入检测引擎（B的职责范围，A负责接口集成）
+# 导入检测引擎
 from detection import detection_engine
 
 
@@ -49,8 +50,6 @@ def insert_task_metadata(task_id: str, video_path: str, fps: float,
                        frame_count: int, duration: float, width: int, height: int):
     """
     Insert task metadata into database
-
-    # DB_INSERT_SYNC
     """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -103,20 +102,18 @@ ERROR_CODES = {
 # 响应模型
 class SuccessResponse(BaseModel):
     success: bool = True
-    data: Dict[str, Any]
-
-class ErrorResponse(BaseModel):
-    success: bool = False
-    error: str
+    data: Optional[Dict[str, Any]] = None  # 改为 Optional
+    error: Optional[str] = None          # 添加了 error 字段
 
 def ResponseWrapper(success: bool, data=None, error=None):
     """统一响应格式包装器"""
     if success:
         return {"success": True, "data": data}
     else:
-        return {"success": False, "error": error}
+        return {"success": False, "data": None, "error": error}  # 添加了 data: None
 
-@app.post("/upload", response_model=SuccessResponse)
+
+@app.post("/upload")
 async def upload_video(file: UploadFile = File(...)):
     """
     上传视频文件
@@ -192,30 +189,24 @@ async def upload_video(file: UploadFile = File(...)):
         traceback.print_exc()
         return ResponseWrapper(False, error="INTERNAL_ERROR")
 
-# SYNCED_UPLOAD: 与前端联调通过 2025-11-19
 
-@app.post("/detect/{task_id}", response_model=SuccessResponse)
+@app.post("/detect/{task_id}")
 async def run_detection(task_id: str):
     """
-    执行目标检测 - 接口骨架，等待B实现检测逻辑
+    执行目标检测
 
-    A的职责范围：
+    职责范围：
     - 检查任务是否存在
     - 幂等性操作（避免重复推理）
     - 接口规范和错误处理
-
-    B的职责范围：
-    - YOLOv8模型推理
-    - 检测算法实现
-    - JSON结果生成
     """
     try:
-        # 检查任务是否存在 - A的职责
+        # 检查任务是否存在
         video_path = Path(f"./data/videos/{task_id}/video.mp4")
         if not video_path.exists():
             return ResponseWrapper(False, error="TASK_NOT_FOUND")
 
-        # 检查检测结果是否已存在 - A的职责（幂等性）
+        # 检查检测结果是否已存在（幂等性）
         detection_path = Path(f"./data/detections/{task_id}.json")
         if detection_path.exists():
             return ResponseWrapper(True, data={
@@ -224,7 +215,7 @@ async def run_detection(task_id: str):
                 "task_id": task_id
             })
 
-        # 调用B的检测引擎进行推理（A的接口集成职责）
+        # 调用检测引擎进行推理
         print(f"[INFO] Starting detection for task: {task_id}")
 
         # 执行检测
@@ -247,7 +238,8 @@ async def run_detection(task_id: str):
         print(f"[ERROR] /detect/{task_id}: {str(e)}")
         return ResponseWrapper(False, error="INTERNAL_ERROR")
 
-@app.get("/detections/{task_id}", response_model=SuccessResponse)
+
+@app.get("/detections/{task_id}")
 async def get_detections(task_id: str):
     """
     获取检测结果
@@ -270,6 +262,7 @@ async def get_detections(task_id: str):
     except Exception as e:
         print(f"[ERROR] /detections/{task_id}: {str(e)}")
         return ResponseWrapper(False, error="INTERNAL_ERROR")
+
 
 @app.get("/videos/{task_id}")
 async def get_video(task_id: str):
@@ -294,6 +287,7 @@ async def get_video(task_id: str):
     except Exception as e:
         print(f"[ERROR] /videos/{task_id}: {str(e)}")
         return ResponseWrapper(False, error="INTERNAL_ERROR")
+
 
 @app.get("/history", response_model=SuccessResponse)
 async def get_history():
@@ -328,6 +322,7 @@ async def get_history():
         print(f"[ERROR] /history: {str(e)}")
         return ResponseWrapper(False, error="HISTORY_LOAD_FAILED")
 
+
 @app.get("/")
 async def root():
     """
@@ -338,6 +333,7 @@ async def root():
         "version": "P0-20251117",
         "status": "running"
     }
+
 
 # 应用启动时确保必要目录存在
 @app.on_event("startup")
@@ -382,7 +378,6 @@ async def startup_event():
 
     print("[INFO] 智能高铁巡检系统 API 启动成功")
 
-# SYNCED: 与 UploadPage 联调通过 2025-11-18
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
