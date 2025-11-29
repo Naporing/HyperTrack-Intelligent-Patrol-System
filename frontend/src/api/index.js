@@ -72,17 +72,91 @@ export const uploadVideo = async (file, onUploadProgress) => {
   }
 }
 
+// 触发检测接口 - 对应 POST /detect/{task_id}
+export const triggerDetection = async (taskId) => {
+  try {
+    const response = await api.post(`/detect/${taskId}`)
+    return {
+      success: true,
+      data: response.data.data
+    }
+  } catch (error) {
+    console.error('Detection trigger error:', error)
+    if (error.response) {
+      const errorData = error.response.data
+      return {
+        success: false,
+        error: errorData.error || 'DETECT_FAILED',
+        message: getErrorMessage(errorData.error)
+      }
+    } else if (error.request) {
+      return {
+        success: false,
+        error: 'NETWORK_ERROR',
+        message: '网络连接失败，请检查网络设置'
+      }
+    } else {
+      return {
+        success: false,
+        error: 'UNKNOWN_ERROR',
+        message: '未知错误，请稍后重试'
+      }
+    }
+  }
+}
+
+// 获取检测结果接口 - 对应 GET /detections/{task_id}
+export const getDetections = async (taskId) => {
+  try {
+    const response = await api.get(`/detections/${taskId}`)
+    return {
+      success: true,
+      data: response.data.data
+    }
+  } catch (error) {
+    console.error('Fetch detections error:', error)
+    if (error.response) {
+      const errorData = error.response.data
+      return {
+        success: false,
+        error: errorData.error || 'DETECTIONS_NOT_FOUND',
+        message: getErrorMessage(errorData.error)
+      }
+    } else if (error.request) {
+      return {
+        success: false,
+        error: 'NETWORK_ERROR',
+        message: '网络连接失败，请检查网络设置'
+      }
+    } else {
+      return {
+        success: false,
+        error: 'UNKNOWN_ERROR',
+        message: '未知错误，请稍后重试'
+      }
+    }
+  }
+}
+
 // 错误信息映射
 const getErrorMessage = (errorCode) => {
   const errorMessages = {
+    // 现有上传相关错误
     'UPLOAD_INVALID_FILE': '文件格式不支持或文件过大',
     'UPLOAD_SAVE_FAILED': '保存失败，请重试',
+
+    // 新增检测相关错误
+    'TASK_NOT_FOUND': '任务不存在，请重新上传视频',
+    'DETECT_FAILED': '检测失败，请重试',
+    'DETECTIONS_NOT_FOUND': '检测结果不存在',
+
+    // 通用错误
     'INTERNAL_ERROR': '服务器错误，请稍后重试',
     'NETWORK_ERROR': '网络连接失败，请检查网络设置',
     'UNKNOWN_ERROR': '未知错误，请稍后重试'
   }
 
-  return errorMessages[errorCode] || '上传失败，请重试'
+  return errorMessages[errorCode] || '操作失败，请重试'
 }
 
 // 格式化文件大小
