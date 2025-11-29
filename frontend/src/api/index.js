@@ -138,17 +138,54 @@ export const getDetections = async (taskId) => {
   }
 }
 
+// 获取历史任务列表接口 - 对应 GET /history
+export const getHistory = async () => {
+  try {
+    const response = await api.get('/history')
+    return {
+      success: true,
+      data: response.data.data,
+      response: response
+    }
+  } catch (error) {
+    console.error('Fetch history error:', error)
+    if (error.response) {
+      const errorData = error.response.data
+      return {
+        success: false,
+        error: errorData.error || 'HISTORY_LOAD_FAILED',
+        message: getErrorMessage(errorData.error)
+      }
+    } else if (error.request) {
+      return {
+        success: false,
+        error: 'NETWORK_ERROR',
+        message: '网络连接失败，请检查网络设置'
+      }
+    } else {
+      return {
+        success: false,
+        error: 'UNKNOWN_ERROR',
+        message: '未知错误，请稍后重试'
+      }
+    }
+  }
+}
+
 // 错误信息映射
 const getErrorMessage = (errorCode) => {
   const errorMessages = {
-    // 现有上传相关错误
+    // 上传相关错误
     'UPLOAD_INVALID_FILE': '文件格式不支持或文件过大',
     'UPLOAD_SAVE_FAILED': '保存失败，请重试',
 
-    // 新增检测相关错误
+    // 检测相关错误
     'TASK_NOT_FOUND': '任务不存在，请重新上传视频',
     'DETECT_FAILED': '检测失败，请重试',
     'DETECTIONS_NOT_FOUND': '检测结果不存在',
+
+    // 历史相关错误
+    'HISTORY_LOAD_FAILED': '历史记录加载失败，请重试',
 
     // 通用错误
     'INTERNAL_ERROR': '服务器错误，请稍后重试',
