@@ -1,0 +1,60 @@
+[
+  {
+    "frame_index": 0,
+    "time": 0.0,
+    "boxes": [
+      {
+        "id": 1,
+        "xyxy": [120, 300, 350, 620],
+        "label": "iron_pole"
+      },
+      {
+        "id": 2,
+        "xyxy": [500, 400, 700, 800],
+        "label": "concrete_pole"
+      }
+    ]
+  },
+  {
+    "frame_index": 1,
+    "time": 0.0333,
+    "boxes": []
+  },
+  {
+    "frame_index": 2,
+    "time": 0.0666,
+    "boxes": [
+      {
+        "id": 1,
+        "xyxy": [130, 310, 360, 630],
+        "label": "iron_gantry_pole"
+      }
+    ]
+  },
+  {
+    "frame_index": 3,
+    "time": 0.0999,
+    "boxes": []
+  },
+  {
+    "frame_index": 4,
+    "time": 0.1332,
+    "boxes": [
+      {
+        "id": 1,
+        "xyxy": [140, 320, 370, 640],
+        "label": "iron_pole"
+      },
+      {
+        "id": 2,
+        "xyxy": [510, 410, 710, 810],
+        "label": "iron_pole"
+      },
+      {
+        "id": 3,
+        "xyxy": [800, 200, 950, 500],
+        "label": "concrete_pole"
+      }
+    ]
+  }
+]
