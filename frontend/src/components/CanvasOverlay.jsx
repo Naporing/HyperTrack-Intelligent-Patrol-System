@@ -5,10 +5,12 @@ import { getBoxColor } from '../utils/mockData';
  * CanvasOverlay 组件 - 用于在视频播放器上绘制检测框
  * @param {Object} props
  * @param {HTMLVideoElement} props.videoRef - video.js 视频元素引用
- * @param {Array} props.detections - 检测结果数据（可选，用于mock测试）
+ * @param {Array} props.detections - 检测结果数据数组
+ * @param {number} props.fps - 视频帧率
+ * @param {number} props.currentTime - 当前播放时间
  * @param {boolean} props.useMockData - 是否使用mock数据进行测试
  */
-const CanvasOverlay = ({ videoRef, detections = [], useMockData = false }) => {
+const CanvasOverlay = ({ videoRef, detections = [], fps = 30, currentTime = 0, useMockData = false }) => {
   const canvasRef = useRef(null);
 
   /**
@@ -110,6 +112,86 @@ const CanvasOverlay = ({ videoRef, detections = [], useMockData = false }) => {
   };
 
   /**
+   * 时间与帧索引转换函数（严格按公式实现）
+   * @param {number} currentTime - 当前播放时间（秒）
+   * @returns {number} 对应的帧索引
+   */
+  const timeToFrameIndex = (currentTime) => {
+    // 严格按公式实现：frame_index = Math.floor(currentTime * fps)
+    return Math.floor(currentTime * fps);
+  };
+
+  /**
+   * 帧索引与时间转换函数（反向转换）
+   * @param {number} frameIndex - 帧索引
+   * @returns {number} 对应的播放时间（秒）
+   */
+  const frameIndexToTime = (frameIndex) => {
+    // 严格按公式实现：time = frameIndex / fps
+    return frameIndex / fps;
+  };
+
+  /**
+   * 时间与帧索引转换算法（兼容旧函数名）
+   * @param {number} currentTime - 当前播放时间（秒）
+   * @returns {number} 对应的帧索引
+   */
+  const getCurrentFrameIndex = (currentTime) => {
+    return timeToFrameIndex(currentTime);
+  };
+
+  /**
+   * 获取当前时间对应的检测框数据（第4天核心功能）
+   * @param {number} currentTime - 当前播放时间
+   * @returns {Array} 当前帧的检测框数组
+   */
+  const getCurrentFrameBoxes = (currentTime) => {
+    if (!detections || detections.length === 0) {
+      return [];
+    }
+
+    const frameIndex = timeToFrameIndex(currentTime);
+
+    // 在detections数组中查找对应帧的数据
+    const frameData = detections.find(d => d.frame_index === frameIndex);
+
+    return frameData ? frameData.boxes : [];
+  };
+
+  /**
+   * Canvas核心绘制逻辑（第4天核心功能）
+   * 在视频播放时实时同步绘制检测框
+   */
+  const drawCurrentFrame = () => {
+    if (!canvasRef.current || !videoRef) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    // 清空画布（每帧清空，避免残影）
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 获取当前帧的检测框
+    let boxesToDraw = [];
+
+    if (useMockData) {
+      // Mock数据模式：使用预定义的测试数据
+      boxesToDraw = getMockData();
+    } else {
+      // 真实数据模式：根据当前时间查找对应帧的检测框
+      boxesToDraw = getCurrentFrameBoxes(currentTime);
+    }
+
+    // 绘制当前帧的检测框
+    drawBoxes(ctx, boxesToDraw);
+
+    // 调试信息
+    if (boxesToDraw.length > 0) {
+      console.log(`绘制第${getCurrentFrameIndex(currentTime)}帧，检测框数量: ${boxesToDraw.length}`);
+    }
+  };
+
+  /**
    * 触发绘制（用于mock数据测试）
    */
   const triggerDrawing = () => {
@@ -125,29 +207,30 @@ const CanvasOverlay = ({ videoRef, detections = [], useMockData = false }) => {
       boxesToDraw = getMockData();
     } else if (detections && detections.length > 0) {
       // 从detections数据中提取当前帧的boxes
-      boxesToDraw = detections;
+      boxesToDraw = getCurrentFrameBoxes(currentTime);
     }
 
     drawBoxes(ctx, boxesToDraw);
   };
 
   /**
-   * 监听全屏状态变化
+   * 监听全屏状态变化（第4天核心功能）
+   * 确保全屏切换时Canvas重绘，坐标不偏移
    */
   const handleFullscreenChange = () => {
-    // 全屏状态变化时重新同步Canvas尺寸
+    // 全屏状态变化时重新同步Canvas尺寸并重绘
     setTimeout(() => {
       syncCanvasSize();
-      triggerDrawing(); // 重新绘制
+      drawCurrentFrame(); // 使用第4天的核心绘制逻辑重新绘制
     }, 100);
   };
 
   /**
-   * 监听窗口尺寸变化
+   * 监听窗口尺寸变化（第4天优化）
    */
   const handleResize = () => {
     syncCanvasSize();
-    triggerDrawing(); // 重新绘制
+    drawCurrentFrame(); // 使用第4天的核心绘制逻辑重新绘制
   };
 
   useEffect(() => {
@@ -175,10 +258,10 @@ const CanvasOverlay = ({ videoRef, detections = [], useMockData = false }) => {
     };
   }, [videoRef]);
 
-  // 当detections或useMockData变化时重新绘制
+  // 当currentTime、detections或useMockData变化时重新绘制（第4天核心功能）
   useEffect(() => {
-    triggerDrawing();
-  }, [detections, useMockData]);
+    drawCurrentFrame();
+  }, [currentTime, detections, useMockData]);
 
   return (
     <div
