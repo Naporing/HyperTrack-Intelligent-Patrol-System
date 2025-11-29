@@ -1,64 +1,64 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  syncCanvasSize,
-  drawTestBoxes,
-  formatTime,
-  getFrameIndex,
-  clearCanvas
-} from '../utils/canvasUtils'
+import CanvasOverlay from '../components/CanvasOverlay'
+import { testCanvasDrawing, generateMockBoxes, generateBoundaryTestBoxes } from '../utils/mockData'
 
 const CanvasTestPage = () => {
+  const videoRef = useRef(null)
   const canvasRef = useRef(null)
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 })
-  const [testInfo, setTestInfo] = useState({ time: 0, fps: 30, frameIndex: 0 })
+  const [useMockData, setUseMockData] = useState(true)
+  const [currentTest, setCurrentTest] = useState('basic')
+  const [testResults, setTestResults] = useState(null)
 
+  /**
+   * 运行Canvas绘制测试
+   */
+  const runCanvasTest = (testType) => {
+    console.log(`🧪 开始Canvas测试: ${testType}`)
+
+    setTimeout(() => {
+      const canvasOverlay = document.querySelector('.canvas-overlay-container canvas');
+      if (!canvasOverlay) {
+        console.error('❌ Canvas元素未找到');
+        return;
+      }
+
+      const result = testCanvasDrawing(canvasOverlay, testType);
+      setTestResults(result);
+      setCurrentTest(testType);
+
+      console.log(`✅ Canvas测试完成: ${testType}`, result);
+    }, 500);
+  };
+
+  /**
+   * 初始化模拟视频元素
+   */
   useEffect(() => {
-    // 初始化Canvas
-    const canvas = canvasRef.current
-    if (!canvas) return;
+    if (videoRef.current) {
+      videoRef.current.clientWidth = 800;
+      videoRef.current.clientHeight = 600;
+      videoRef.current.videoWidth = 800;
+      videoRef.current.videoHeight = 600;
 
-    // 设置Canvas基础尺寸
-    canvas.width = canvasSize.width
-    canvas.height = canvasSize.height
-
-    // 绘制测试框
-    drawTestBoxes(canvas)
-
-    // 模拟视频时间更新
-    const interval = setInterval(() => {
-      setTestInfo(prev => {
-        const newTime = (prev.time + 0.1) % 10 // 0-10秒循环
-        return {
-          ...prev,
-          time: newTime,
-          frameIndex: getFrameIndex(newTime, prev.fps)
-        }
-      })
-    }, 100)
-
-    return () => clearInterval(interval)
-  }, [canvasSize])
-
-  const handleClearCanvas = () => {
-    const canvas = canvasRef.current
-    if (canvas) {
-      clearCanvas(canvas)
+      const event = new Event('loadedmetadata');
+      videoRef.current.dispatchEvent(event);
     }
-  }
+  }, []);
 
-  const handleRedrawBoxes = () => {
-    const canvas = canvasRef.current
-    if (canvas) {
-      drawTestBoxes(canvas)
+  /**
+   * 获取当前测试的检测框数据
+   */
+  const getCurrentTestData = () => {
+    switch (currentTest) {
+      case 'basic':
+        return generateMockBoxes();
+      case 'boundary':
+        return generateBoundaryTestBoxes();
+      default:
+        return [];
     }
-  }
-
-  const handleResizeCanvas = () => {
-    const newWidth = Math.floor(Math.random() * 400) + 600 // 600-1000
-    const newHeight = Math.floor(Math.random() * 300) + 400 // 400-700
-    setCanvasSize({ width: newWidth, height: newHeight })
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -66,7 +66,7 @@ const CanvasTestPage = () => {
       <nav className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-semibold text-gray-900">Canvas测试页面</h1>
+            <h1 className="text-xl font-semibold text-gray-900">Canvas绘制测试 - 第3天验证</h1>
             <div className="flex space-x-4">
               <Link
                 to="/upload"
@@ -81,103 +81,223 @@ const CanvasTestPage = () => {
 
       {/* 主要内容 */}
       <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* 左侧Canvas区域 */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Canvas绘制测试</h2>
+        {/* 控制面板 */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">测试控制面板</h2>
 
-            <div className="border-2 border-gray-200 rounded-lg p-4 mb-4">
-              <canvas
-                ref={canvasRef}
-                className="w-full border border-gray-300 rounded"
-                style={{ maxWidth: '100%', height: 'auto' }}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* 测试类型选择 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                测试类型
+              </label>
+              <select
+                value={currentTest}
+                onChange={(e) => setCurrentTest(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="basic">基础检测框测试</option>
+                <option value="boundary">边界条件测试</option>
+                <option value="empty">空数据测试</option>
+              </select>
             </div>
 
-            <div className="flex space-x-2">
+            {/* Mock数据开关 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Mock数据模式
+              </label>
+              <div className="flex items-center h-10">
+                <input
+                  type="checkbox"
+                  id="useMockData"
+                  checked={useMockData}
+                  onChange={(e) => setUseMockData(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="useMockData" className="ml-2 block text-sm text-gray-900">
+                  使用Mock数据
+                </label>
+              </div>
+            </div>
+
+            {/* 运行测试按钮 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                运行测试
+              </label>
               <button
-                onClick={handleRedrawBoxes}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                onClick={() => runCanvasTest(currentTest)}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                重绘测试框
-              </button>
-              <button
-                onClick={handleClearCanvas}
-                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-              >
-                清空画布
-              </button>
-              <button
-                onClick={handleResizeCanvas}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
-              >
-                随机尺寸
+                开始测试
               </button>
             </div>
           </div>
 
-          {/* 右侧信息区域 */}
-          <div className="space-y-6">
-            {/* Canvas信息 */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Canvas信息</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-700">Canvas尺寸:</span>
-                  <span className="text-gray-600">{canvasSize.width} × {canvasSize.height}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-700">设备像素比:</span>
-                  <span className="text-gray-600">{window.devicePixelRatio || 1}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 模拟视频信息 */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">模拟视频信息</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-700">当前时间:</span>
-                  <span className="text-gray-600">{formatTime(testInfo.time)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-700">帧率:</span>
-                  <span className="text-gray-600">{testInfo.fps} FPS</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-700">当前帧:</span>
-                  <span className="text-gray-600">{testInfo.frameIndex}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 检测框说明 */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-blue-900 mb-3">测试说明</h3>
-              <div className="space-y-2 text-sm text-blue-800">
-                <p>• 红色框: iron_pole (钢制电杆)</p>
-                <p>• 蓝色框: concrete_pole (混凝土电杆)</p>
-                <p>• 绿色框: iron_gantry_pole (钢制门型电杆)</p>
-                <p>• 框标签显示格式: [编号]号框 ([类型])</p>
-                <p>• Canvas尺寸可动态调整，测试响应式效果</p>
-              </div>
-            </div>
-
-            {/* 工具函数说明 */}
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">已实现工具函数</h3>
-              <ul className="space-y-1 text-sm text-gray-600">
-                <li>• syncCanvasSize() - 尺寸同步</li>
-                <li>• formatTime() - 时间格式化</li>
-                <li>• getFrameIndex() - 帧索引计算</li>
-                <li>• drawBoxes() - 绘制检测框</li>
-                <li>• getBoxColor() - 颜色映射</li>
-                <li>• clearCanvas() - 清空画布</li>
-              </ul>
-            </div>
+          {/* 快速测试按钮组 */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              onClick={() => runCanvasTest('basic')}
+              className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+            >
+              基础测试
+            </button>
+            <button
+              onClick={() => runCanvasTest('boundary')}
+              className="px-3 py-1 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700"
+            >
+              边界测试
+            </button>
+            <button
+              onClick={() => runCanvasTest('empty')}
+              className="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700"
+            >
+              空数据测试
+            </button>
           </div>
         </div>
+
+        {/* Canvas测试区域 */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Canvas绘制区域</h2>
+
+          {/* 模拟视频容器 */}
+          <div className="relative bg-black rounded-lg overflow-hidden" style={{ width: '800px', height: '600px', maxWidth: '100%' }}>
+            {/* 模拟视频元素 */}
+            <video
+              ref={videoRef}
+              className="w-full h-full"
+              style={{ display: 'block' }}
+              muted
+            />
+
+            {/* Canvas覆盖层 */}
+            <CanvasOverlay
+              videoRef={videoRef}
+              detections={useMockData ? getCurrentTestData() : []}
+              useMockData={useMockData}
+            />
+
+            {/* 测试信息叠加 */}
+            {testResults && (
+              <div className="absolute top-4 right-4 bg-black bg-opacity-75 text-white p-3 rounded text-sm">
+                <div>测试类型: {testResults.testType}</div>
+                <div>检测框数量: {testResults.boxCount}</div>
+                <div>画布尺寸: {testResults.canvasSize.width}×{testResults.canvasSize.height}</div>
+              </div>
+            )}
+          </div>
+
+          {/* 当前测试数据说明 */}
+          <div className="mt-4 p-4 bg-gray-50 rounded">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">当前测试数据:</h3>
+            {currentTest === 'basic' && (
+              <div>
+                <p className="text-sm text-gray-600">基础测试：3个标准检测框，覆盖3种电杆类型</p>
+                <div className="flex flex-wrap gap-4 mt-2">
+                  <span className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded">iron_pole (红色)</span>
+                  <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">concrete_pole (蓝色)</span>
+                  <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded">iron_gantry_pole (绿色)</span>
+                </div>
+              </div>
+            )}
+            {currentTest === 'boundary' && (
+              <div>
+                <p className="text-sm text-gray-600">边界测试：3个特殊位置检测框，测试边界情况</p>
+                <div className="flex flex-wrap gap-4 mt-2">
+                  <span className="text-xs px-2 py-1 bg-gray-100 text-gray-800 rounded">左上角小框</span>
+                  <span className="text-xs px-2 py-1 bg-gray-100 text-gray-800 rounded">右下角小框</span>
+                  <span className="text-xs px-2 py-1 bg-gray-100 text-gray-800 rounded">横跨画布框</span>
+                </div>
+              </div>
+            )}
+            {currentTest === 'empty' && (
+              <div>
+                <p className="text-sm text-gray-600">空数据测试：无检测框，验证画布清理功能</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 测试结果说明 */}
+        {testResults && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">测试结果</h2>
+
+            {testResults.success ? (
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <span className="text-green-600 mr-2">✅</span>
+                  <span className="text-gray-700">Canvas绘制测试成功完成</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="bg-gray-50 p-4 rounded">
+                    <h4 className="font-medium text-gray-700 mb-2">测试信息</h4>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• 测试类型: {testResults.testType}</li>
+                      <li>• 检测框数量: {testResults.boxCount}</li>
+                      <li>• 画布宽度: {testResults.canvasSize.width}px</li>
+                      <li>• 画布高度: {testResults.canvasSize.height}px</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded">
+                    <h4 className="font-medium text-gray-700 mb-2">验证要点</h4>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• 矩形框位置正确</li>
+                      <li>• 颜色符合规范</li>
+                      <li>• 标签文字清晰</li>
+                      <li>• 画布尺寸适配</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* 检测框详情 */}
+                {getCurrentTestData().length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="font-medium text-gray-700 mb-2">检测框详情:</h4>
+                    <div className="bg-gray-50 p-4 rounded">
+                      {getCurrentTestData().map(box => {
+                        const [x1, y1, x2, y2] = box.xyxy;
+                        const width = x2 - x1;
+                        const height = y2 - y1;
+                        const color = {
+                          'iron_pole': '#EF4444',
+                          'concrete_pole': '#3B82F6',
+                          'iron_gantry_pole': '#10B981'
+                        }[box.label] || '#6B7280';
+
+                        return (
+                          <div key={box.id} className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0">
+                            <span className="text-sm font-medium">{box.id}号框</span>
+                            <div className="flex items-center gap-4 text-sm">
+                              <span>{box.label}</span>
+                              <div className="flex items-center gap-1">
+                                <div
+                                  className="w-4 h-4 border border-gray-400"
+                                  style={{ backgroundColor: color }}
+                                />
+                                <span>位置({x1},{y1})</span>
+                              </div>
+                              <span className="text-gray-500">尺寸{width}×{height}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center text-red-600">
+                <span className="mr-2">❌</span>
+                <span>Canvas绘制测试失败</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

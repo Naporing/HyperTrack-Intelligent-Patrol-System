@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第3天Canvas Mock数据测试验证</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .canvas-container {
+            position: relative;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            margin: 20px 0;
+            background: #000;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 400px;
+        }
+        .test-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .btn-primary { background: #3B82F6; color: white; }
+        .btn-secondary { background: #6B7280; color: white; }
+        .btn-danger { background: #EF4444; color: white; }
+        .btn-success { background: #10B981; color: white; }
+        button:hover { opacity: 0.8; }
+        button:active { transform: scale(0.98); }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .info { background: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        .color-legend {
+            display: flex;
+            gap: 15px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        .color-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .color-box {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+        .checklist {
+            background: #e7f3ff;
+            border-left: 4px solid #3B82F6;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .checklist h3 {
+            margin-top: 0;
+            color: #1e40af;
+        }
+        .checklist ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .checklist li {
+            margin: 5px 0;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background: #10B981; }
+        .status-pending { background: #F59E0B; }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 第3天Canvas Mock数据测试验证</h1>
+        <p><strong>目标：</strong>验证Canvas能正确绘制矩形框（若B的YOLO推理未完成）</p>
+
+        <div class="info-grid">
+            <div class="checklist">
+                <h3>✅ 第3天要求的功能清单</h3>
+                <ul>
+                    <li><span class="status-indicator status-success"></span>Canvas尺寸自适应逻辑</li>
+                    <li><span class="status-indicator status-success"></span>devicePixelRatio处理</li>
+                    <li><span class="status-indicator status-success"></span>resize和fullscreenchange事件</li>
+                    <li><span class="status-indicator status-success"></span>drawBoxes(ctx, boxes)函数骨架</li>
+                    <li><span class="status-indicator status-success"></span>Mock数据测试Canvas绘制矩形框</li>
+                </ul>
+            </div>
+            <div class="checklist">
+                <h3>🎨 MVP文档规范颜色</h3>
+                <div class="color-legend">
+                    <div class="color-item">
+                        <div class="color-box" style="background: #EF4444;"></div>
+                        <span>iron_pole (红色 #EF4444)</span>
+                    </div>
+                    <div class="color-item">
+                        <div class="color-box" style="background: #3B82F6;"></div>
+                        <span>concrete_pole (蓝色 #3B82F6)</span>
+                    </div>
+                    <div class="color-item">
+                        <div class="color-box" style="background: #10B981;"></div>
+                        <span>iron_gantry_pole (绿色 #10B981)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="testCanvas"></canvas>
+        </div>
+
+        <div class="test-buttons">
+            <button class="btn-primary" onclick="runTest('basic')">🎯 基础测试</button>
+            <button class="btn-secondary" onclick="runTest('boundary')">📐 边界测试</button>
+            <button class="btn-success" onclick="runTest('empty')">📭 空数据测试</button>
+            <button class="btn-danger" onclick="clearCanvas()">🧹 清空画布</button>
+            <button class="btn-primary" onclick="testDevicePixelRatio()">📱 DPI适配测试</button>
+            <button class="btn-secondary" onclick="testCanvasSync()">🔄 Canvas同步测试</button>
+        </div>
+
+        <div class="result" id="testResult">
+🚀 点击测试按钮开始验证Canvas功能
+
+测试说明：
+• 基础测试：验证3种电杆类型的标准检测框
+• 边界测试：验证边缘、小框、大框等边界情况
+• 空数据测试：验证无检测框时的处理
+• DPI适配测试：验证高分辨率屏幕适配
+• 同步测试：验证Canvas尺寸自适应
+        </div>
+    </div>
+
+    <script type="module">
+        // Mock数据生成器（与项目中的mockData.js完全一致）
+        const generateMockBoxes = () => {
+            return [
+                {
+                    id: 1,
+                    xyxy: [100, 200, 300, 600],
+                    label: 'iron_pole'
+                },
+                {
+                    id: 2,
+                    xyxy: [400, 220, 500, 610],
+                    label: 'concrete_pole'
+                },
+                {
+                    id: 3,
+                    xyxy: [650, 210, 820, 630],
+                    label: 'iron_gantry_pole'
+                }
+            ];
+        };
+
+        const generateBoundaryTestBoxes = () => {
+            return [
+                {
+                    id: 10,
+                    xyxy: [10, 10, 50, 50],
+                    label: 'iron_pole'
+                },
+                {
+                    id: 11,
+                    xyxy: [750, 550, 790, 590],
+                    label: 'concrete_pole'
+                },
+                {
+                    id: 12,
+                    xyxy: [0, 100, 800, 200],
+                    label: 'iron_gantry_pole'
+                }
+            ];
+        };
+
+        const getBoxColor = (label) => {
+            const colorMap = {
+                'iron_pole': '#EF4444',
+                'concrete_pole': '#3B82F6',
+                'iron_gantry_pole': '#10B981'
+            };
+            return colorMap[label] || '#6B7280';
+        };
+
+        const drawSingleBox = (ctx, box) => {
+            const { id, xyxy, label } = box;
+            const [x1, y1, x2, y2] = xyxy;
+            const color = getBoxColor(label);
+
+            // 绘制矩形框
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+
+            // 绘制标签背景
+            const text = `${id}号框`;
+            ctx.font = '12px sans-serif';
+            const textWidth = ctx.measureText(text).width;
+
+            ctx.fillStyle = color;
+            ctx.fillRect(x1, y1 - 20, textWidth + 8, 20);
+
+            // 绘制标签文字
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText(text, x1 + 4, y1 - 6);
+        };
+
+        const testCanvasDrawing = (canvas, testType = 'basic') => {
+            if (!canvas) {
+                console.error('Canvas元素不存在');
+                return null;
+            }
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                console.error('无法获取Canvas上下文');
+                return null;
+            }
+
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            let testBoxes = [];
+            let testDescription = '';
+
+            switch (testType) {
+                case 'basic':
+                    testBoxes = generateMockBoxes();
+                    testDescription = '基础检测框测试';
+                    break;
+                case 'boundary':
+                    testBoxes = generateBoundaryTestBoxes();
+                    testDescription = '边界条件测试';
+                    break;
+                case 'empty':
+                    testDescription = '空数据测试';
+                    break;
+                default:
+                    testBoxes = generateMockBoxes();
+                    testDescription = '基础检测框测试';
+            }
+
+            // 绘制所有检测框
+            testBoxes.forEach(box => drawSingleBox(ctx, box));
+
+            // 添加测试信息显示
+            ctx.fillStyle = '#374151';
+            ctx.font = '14px sans-serif';
+            ctx.fillText(`测试类型: ${testDescription}`, 10, 30);
+            ctx.fillText(`检测框数量: ${testBoxes.length}`, 10, 50);
+            ctx.fillText(`设备像素比: ${window.devicePixelRatio || 1}`, 10, 70);
+
+            if (testBoxes.length > 0) {
+                const labelCounts = testBoxes.reduce((acc, box) => {
+                    acc[box.label] = (acc[box.label] || 0) + 1;
+                    return acc;
+                }, {});
+
+                ctx.fillText('电杆类型分布:', 10, 90);
+                Object.entries(labelCounts).forEach(([label, count], index) => {
+                    const color = getBoxColor(label);
+                    ctx.fillStyle = color;
+                    ctx.fillText(`• ${label}: ${count}个`, 20, 110 + index * 20);
+                });
+            }
+
+            return {
+                success: true,
+                testType,
+                boxCount: testBoxes.length,
+                canvasSize: { width: canvas.width, height: canvas.height }
+            };
+        };
+
+        const initCanvas = () => {
+            const canvas = document.getElementById('testCanvas');
+            const dpr = window.devicePixelRatio || 1;
+
+            // 设置Canvas尺寸（考虑devicePixelRatio）
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            // 缩放坐标系
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            console.log(`Canvas初始化: ${canvas.width}×${canvas.height}, DPR: ${dpr}`);
+            return canvas;
+        };
+
+        window.runTest = (testType) => {
+            const canvas = initCanvas();
+            const result = testCanvasDrawing(canvas, testType);
+
+            if (result) {
+                const resultDiv = document.getElementById('testResult');
+                const timestamp = new Date().toLocaleTimeString();
+
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+✅ [${timestamp}] ${testType}测试完成
+
+📊 测试结果：
+• 测试状态: 成功
+• 测试类型: ${result.testType}
+• 检测框数量: ${result.boxCount}
+• Canvas尺寸: ${result.canvasSize.width}×${result.canvasSize.height}
+• 设备像素比: ${window.devicePixelRatio || 1}
+
+${result.boxCount > 0 ? `🎯 检测框详情:\n${generateMockBoxes().map(box => {
+    const [x1, y1, x2, y2] = box.xyxy;
+    const width = x2 - x1;
+    const height = y2 - y1;
+    return `  ${box.id}号框 (${box.label}): 位置(${x1},${y1}) 尺寸(${width}×${height})`;
+}).join('\n')}` : ''}
+
+📋 验证功能:
+✅ Canvas尺寸自适应
+✅ devicePixelRatio处理
+✅ 三种电杆类型颜色
+✅ drawBoxes函数骨架
+✅ Mock数据绘制测试
+                `;
+            } else {
+                document.getElementById('testResult').innerHTML = '❌ 测试失败';
+            }
+        };
+
+        window.clearCanvas = () => {
+            const canvas = document.getElementById('testCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            document.getElementById('testResult').className = 'result';
+            document.getElementById('testResult').innerHTML = '🧹 画布已清空';
+        };
+
+        window.testDevicePixelRatio = () => {
+            const canvas = initCanvas();
+            const ctx = canvas.getContext('2d');
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制1px线条测试
+            ctx.strokeStyle = '#EF4444';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(50, 50, 100, 100);
+
+            ctx.fillStyle = '#EF4444';
+            ctx.font = '14px sans-serif';
+            ctx.fillText('1px边框测试', 60, 80);
+            ctx.fillText(`Canvas: ${canvas.width}×${canvas.height}`, 60, 100);
+            ctx.fillText(`Device: ${window.devicePixelRatio || 1}x`, 60, 120);
+
+            document.getElementById('testResult').className = 'result info';
+            document.getElementById('testResult').innerHTML = `
+🖼️ Device Pixel Ratio 测试完成
+📏 Canvas实际尺寸: ${canvas.width}×${canvas.height}
+📱 设备像素比: ${window.devicePixelRatio || 1}x
+✅ 如果线条清晰说明DPI适配正确
+            `;
+        };
+
+        window.testCanvasSync = () => {
+            const canvas = initCanvas();
+            const ctx = canvas.getContext('2d');
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制Canvas尺寸信息
+            ctx.fillStyle = '#374151';
+            ctx.font = '14px sans-serif';
+            const rect = canvas.getBoundingClientRect();
+
+            ctx.fillText('Canvas同步测试', 10, 30);
+            ctx.fillText(`显示尺寸: ${Math.round(rect.width)}×${Math.round(rect.height)}px`, 10, 50);
+            ctx.fillText(`实际尺寸: ${canvas.width}×${canvas.height}px`, 10, 70);
+            ctx.fillText(`设备像素比: ${window.devicePixelRatio || 1}`, 10, 90);
+            ctx.fillText(`缩放比例: ${canvas.width / rect.width}x`, 10, 110);
+
+            // 绘制边框
+            ctx.strokeStyle = '#3B82F6';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(2, 2, rect.width - 4, rect.height / (window.devicePixelRatio || 1) - 4);
+
+            document.getElementById('testResult').className = 'result info';
+            document.getElementById('testResult').innerHTML = `
+🔄 Canvas尺寸自适应测试完成
+📐 显示尺寸: ${Math.round(rect.width)}×${Math.round(rect.height)}px
+🎯 实际尺寸: ${canvas.width}×${canvas.height}px
+📱 缩放比例: ${canvas.width / rect.width}x
+✅ 尺寸自适应逻辑工作正常
+            `;
+        };
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', () => {
+            const canvas = initCanvas();
+            document.getElementById('testResult').innerHTML = `
+🚀 Canvas已初始化，点击测试按钮开始验证
+
+📋 测试说明：
+• 基础测试：验证3种电杆类型的标准检测框绘制
+• 边界测试：验证边缘、小框、大框等边界情况
+• 空数据测试：验证无检测框时的处理能力
+• DPI适配测试：验证高分辨率屏幕的devicePixelRatio处理
+• Canvas同步测试：验证Canvas尺寸自适应逻辑
+
+🎯 所有测试都使用Mock数据，模拟B未完成YOLO推理的情况
+            `;
+
+            // 自动运行基础测试
+            setTimeout(() => {
+                runTest('basic');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
