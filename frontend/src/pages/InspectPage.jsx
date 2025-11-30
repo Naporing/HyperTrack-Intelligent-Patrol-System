@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import AnnotationPanel from '../components/AnnotationPanel'
-import VideoPlayer, { VideoPlayerRef } from '../components/VideoPlayer'
+import VideoPlayer from '../components/VideoPlayer/index.tsx'
 import CanvasOverlay from '../components/CanvasOverlay'
 import { triggerDetection as triggerDetectionAPI, getDetections } from '../api'
 import detectionCache from '../utils/detectionCache'
@@ -12,7 +12,7 @@ const InspectPage = () => {
   const navigate = useNavigate()
 
   // Refs
-  const videoPlayerRef = useRef<VideoPlayerRef>(null)
+  const videoPlayerRef = useRef(null)
 
   // 状态管理
   const [pageState, setPageState] = useState({

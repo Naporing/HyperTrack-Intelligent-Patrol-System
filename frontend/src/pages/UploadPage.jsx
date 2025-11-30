@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { uploadVideo, formatFileSize, formatUploadSpeed } from '../api'
+import { uploadVideo, formatFileSize, formatUploadSpeed, triggerDetection } from '../api'
 
 const UploadPage = () => {
   const [selectedFile, setSelectedFile] = useState(null)
@@ -90,12 +90,19 @@ const UploadPage = () => {
       })
 
       if (result.success) {
-        // 上传成功，跳转到检查页面
+        // 上传成功，获取taskId并跳转
         const taskId = result.data.task_id
+
+        // 自动触发检测
+        triggerDetection(taskId).catch(err => {
+          console.error('检测触发失败:', err)
+        })
+
+        // 跳转到检查页面
         navigate(`/inspect/${taskId}`)
       } else {
         // 上传失败，显示错误
-        setError(result.message || '上传失败，请重试')
+        setError(result.error || '上传失败，请重试')
         setUploadProgress(null)
       }
     } catch (err) {

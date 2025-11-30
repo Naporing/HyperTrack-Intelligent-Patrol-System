@@ -40,7 +40,7 @@ export const uploadVideo = async (file, onUploadProgress) => {
 
     return {
       success: true,
-      data: response.data.data
+      data: response.data
     }
   } catch (error) {
     console.error('Upload error:', error)
@@ -78,7 +78,7 @@ export const triggerDetection = async (taskId) => {
     const response = await api.post(`/detect/${taskId}`)
     return {
       success: true,
-      data: response.data.data
+      data: response.data
     }
   } catch (error) {
     console.error('Detection trigger error:', error)
@@ -111,7 +111,7 @@ export const getDetections = async (taskId) => {
     const response = await api.get(`/detections/${taskId}`)
     return {
       success: true,
-      data: response.data.data
+      data: response.data
     }
   } catch (error) {
     console.error('Fetch detections error:', error)
@@ -144,7 +144,7 @@ export const getHistory = async () => {
     const response = await api.get('/history')
     return {
       success: true,
-      data: response.data.data,
+      data: response.data,
       response: response
     }
   } catch (error) {
